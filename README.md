@@ -22,3 +22,6 @@ Application can be understood in two parts logically
 1. Run com.tcs.assignment.payment.Main.java to see the results printed on System console
 2. Run "mvn test" to execute all junit tests to see the results of unit tests
 3. After successful "mvn test" execution, Jacoco plugin will help to see the code coverage. Please refer to "target/jacoco-ut/index.html"
+
+Below is the code coverage for latest code
+![alt text](https://github.com/javagirish1805/tnassignment/blob/master/IMAGE%2013-12-19%20AT%2012.25%20PM.jpeg)
