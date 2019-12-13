@@ -30,7 +30,11 @@
 			<version>${junit-jupiter.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+		    <groupId>log4j</groupId>
+		    <artifactId>log4j</artifactId>
+		    <version>1.2.17</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -61,7 +65,7 @@
 							<goal>prepare-agent</goal>
 						</goals>
 					</execution>
-					<!-- attached to Maven test phase -->
+				
 					<execution>
 						<id>report</id>
 						<phase>test</phase>

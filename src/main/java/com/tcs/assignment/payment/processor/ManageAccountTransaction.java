@@ -1,6 +1,5 @@
-package com.tcs.assignment.payment;
+package com.tcs.assignment.payment.processor;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,6 +9,10 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+
+import com.tcs.assignment.payment.model.Transaction;
+import com.tcs.assignment.payment.util.AppConstants;
 
 /**
  *
@@ -21,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class ManageAccountTransaction {
 
+	static Logger logger = Logger.getLogger(ManageAccountTransaction.class);
+	
 	// This is the placeholder to store last processed data from file. And used to compare against further entries
 	// This approach is a temporary solution to this stand alone application. This wouldn't be right approach for a REST service
 	public static Optional<Transaction> lastProcessedData = Optional.empty();
@@ -60,10 +65,11 @@ public class ManageAccountTransaction {
 
 		try {
 			newTransaction = updateBalance(fetchLastTransaction(), newTransaction);
-			Files.write(Paths.get(getFilePath()), System.lineSeparator().concat(newTransaction.toString()).getBytes(),
+			Files.write(Paths.get(AppConstants.FILE_PATH), System.lineSeparator().concat(newTransaction.toString()).getBytes(),
 					StandardOpenOption.APPEND);
-		} catch (IOException e) {
-			e.printStackTrace();
+			logger.debug("New transaction created "+ newTransaction.toString());
+		} catch (IOException ex) {
+			logger.error("Error while creating new transaction", ex);
 		}
 
 	}
@@ -75,13 +81,14 @@ public class ManageAccountTransaction {
 	 */
 	public Optional<Transaction> fetchLastTransaction() {
 		
-		try (Stream<String> stream = Files.lines(Paths.get(getFilePath()))) {
+		try (Stream<String> stream = Files.lines(Paths.get(AppConstants.FILE_PATH))) {
 			String lastLineData = stream.reduce((line1, line2) -> line2).orElse(null);
+			logger.debug("Fetching transaction " + lastLineData);
 			return getTransactionFromString(lastLineData);
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException ex) {
+			logger.error("Error while fetching last transaction ", ex);
 		}
-		return null;
+		return Optional.empty();
 
 	}
 
@@ -104,6 +111,7 @@ public class ManageAccountTransaction {
 				transaction.setBalanceAmount(Double.valueOf(lastTransactionData[4]));
 			}
 		}
+		logger.debug("Transaction from String " + lineData);
 		return Optional.ofNullable(transaction);
 	}
 
@@ -112,10 +120,10 @@ public class ManageAccountTransaction {
 	 * 
 	 * @param  newTransaction
 	 */
-	protected void printPaymentMessage(Optional<Transaction> newTransaction) {
+	public void printPaymentMessage(Optional<Transaction> newTransaction) {
 
 		if (newTransaction.isPresent() && !newTransaction.equals(lastProcessedData)) {
-			System.out.println("Payment received with difference of "
+			logger.info("Payment received with difference of "
 					+ (newTransaction.get().getCreditAmount()
 							- lastProcessedData.map(Transaction::getCreditAmount).orElse(AppConstants.ZERO_DOUBLE))
 					+ " on credit field, and "
@@ -137,16 +145,8 @@ public class ManageAccountTransaction {
 		newTransaction.setBalanceAmount(
 				previousTransaction.map(Transaction::getBalanceAmount).orElse(AppConstants.ZERO_DOUBLE)
 						+ newTransaction.getNetAmount());
+		logger.debug("Balance updated to new transaction " + newTransaction.toString());
 		return newTransaction;
-	}
-
-	/**
-	 * Method to fetch absolute file path
-	 * 
-	 * @return file absolute path
-	 */
-	private static String getFilePath() {
-		return new File("").getAbsolutePath().concat(File.separator).concat(AppConstants.FILE_PATH);
 	}
 
 }

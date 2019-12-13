@@ -1,22 +1,26 @@
-package com.tcs.assignment.payment;
+package com.tcs.assignment.payment.processor;
 
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.tcs.assignment.payment.model.Transaction;
+import com.tcs.assignment.payment.processor.ManageAccountTransaction;
+import com.tcs.assignment.payment.util.AppConstants;
 
 /**
  * Test class to test ManageAccountTransaction
@@ -32,7 +36,7 @@ public class ManageAccountTransactionTest {
     public void testManageAccountTransactionSingleTon() {
 		ManageAccountTransaction manageAccountTransaction = ManageAccountTransaction.getInstance();
 		ManageAccountTransaction manageAccountTransaction1 = ManageAccountTransaction.getInstance();
-		assertEquals(manageAccountTransaction.hashCode(), manageAccountTransaction1.hashCode());
+		assertEquals(manageAccountTransaction.hashCode(), manageAccountTransaction1.hashCode(), "Being Singleton class, both hashCode should be same");
 	}
 	
 	@Test
@@ -40,10 +44,10 @@ public class ManageAccountTransactionTest {
 		Transaction newTrans = new Transaction(Instant.now(), 7777.0, 1111.0);
 		ManageAccountTransaction.getInstance().createTransaction(newTrans);
 		Optional<Transaction> transaction = ManageAccountTransaction.getInstance().fetchLastTransaction();
-		assertTrue(transaction.isPresent());
-		assertEquals(7777.0, transaction.get().getCreditAmount());
-		assertEquals(1111.0, transaction.get().getDebitAmount());
-		assertEquals(6666.0, transaction.get().getNetAmount());
+		assertTrue(transaction.isPresent(), "New transaction record created should be present when fetched");
+		assertEquals(7777.0, transaction.get().getCreditAmount(), "Credit amount of new fetched record should match with input");
+		assertEquals(1111.0, transaction.get().getDebitAmount(), "Debit amount of new fetched record should match with input");
+		assertEquals(6666.0, transaction.get().getNetAmount(), "Net amount of new fetched record should match with input");
 	}
 	
 	@Test
@@ -53,8 +57,9 @@ public class ManageAccountTransactionTest {
 			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			Assertions.assertFalse(true, "No errors expected while writing data to file");
 		}
-		Assertions.assertThrows(Exception.class, () -> ManageAccountTransaction.getInstance().fetchLastTransaction());
+		Assertions.assertThrows(Exception.class, () -> ManageAccountTransaction.getInstance().fetchLastTransaction(), "Exception expected while fetching junk data from file");
 	}
 	
 	@Test
@@ -66,52 +71,30 @@ public class ManageAccountTransactionTest {
 		Transaction newTransSameAslastProcessedData = new Transaction(Instant.now(), 500.0, 0.0);
 		ManageAccountTransaction.lastProcessedData = Optional.ofNullable(lastProcessedData);
 
-		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTransNull)));
+		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTransNull)), "No exceptions expected while printing message with null transaction");
 
-		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTrans)));
+		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTrans)), "No exceptions expected while printing message with valid transaction");
 
-		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTransSameAslastProcessedData)));
+		Assertions.assertDoesNotThrow(() -> ManageAccountTransaction.getInstance().printPaymentMessage(Optional.ofNullable(newTransSameAslastProcessedData)), "No exceptions expected while printing message with valid and same as earlier transaction");
 	}
-	
+	 
 	@Test
 	public void testGetTransactionFromString() {
 		String testDataNull = null;
 		Optional<Transaction> transactionNull = ManageAccountTransaction.getInstance().getTransactionFromString(testDataNull);
-		assertTrue(!transactionNull.isPresent());
+		assertFalse(transactionNull.isPresent(), "Transaction object should not be returned for a null test data");
 		
 		String testDataEmpty = "";
 		Optional<Transaction> transactionEmpty = ManageAccountTransaction.getInstance().getTransactionFromString(testDataEmpty);
-		assertTrue(!transactionEmpty.isPresent());
+		assertFalse(transactionEmpty.isPresent(), "Transaction object should not be returned for an empty test data");
 		
 		String testDataLessSize = "2019-12-03T19:34:34.837Z,10000.0,0.0";
 		Optional<Transaction> transactionDataLessSize = ManageAccountTransaction.getInstance().getTransactionFromString(testDataLessSize);
-		assertTrue(!transactionDataLessSize.isPresent());
+		assertFalse(transactionDataLessSize.isPresent(), "Transaction object should not be returned for incomplete test data");
 		
 		String testData = "2019-12-03T19:34:34.837Z,10000.0,0.0,10000.0,10000.0";
 		Optional<Transaction> transaction = ManageAccountTransaction.getInstance().getTransactionFromString(testData);
-		assertTrue(transaction.isPresent());
-	}
-	
-	@Test
-	public void testUpdateBalance() {
-		tearDown();
-		
-		Transaction prevTrans = new Transaction(Instant.now(), 7777.0, 0.0);
-		ManageAccountTransaction.getInstance().createTransaction(prevTrans);
-		Optional<Transaction> storedPrevTrans = ManageAccountTransaction.getInstance().fetchLastTransaction();
-		
-		Transaction newTrans = new Transaction(Instant.now(), 1.0, 0.0);
- 
-		Transaction expectedTrans = null;
-		
-		try { 
-			Method method = ManageAccountTransaction.getInstance().getClass().getDeclaredMethod("updateBalance", Optional.class, Transaction.class);
-			method.setAccessible(true); 
-			expectedTrans = (Transaction) method.invoke(ManageAccountTransaction.getInstance(), storedPrevTrans, newTrans);
-		} catch (Exception e) {
-			e.printStackTrace(); 
-		}
- 		assertEquals(7778.0, expectedTrans.getBalanceAmount());
+		assertTrue(transaction.isPresent(), "Transaction object should be returned for a valid test data");
 	}
 	
 	@BeforeEach
@@ -122,6 +105,7 @@ public class ManageAccountTransactionTest {
 				Thread.sleep(1000L);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				Assertions.assertFalse(true);
 			}
 			Transaction newTrans = new Transaction(Instant.now(), i*1000.0, 0.0);
 			ManageAccountTransaction.getInstance().createTransaction(newTrans);
@@ -136,6 +120,7 @@ public class ManageAccountTransactionTest {
 			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			Assertions.assertFalse(true);
 		}
 	}
 }

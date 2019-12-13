@@ -1,4 +1,4 @@
-package com.tcs.assignment.payment;
+package com.tcs.assignment.payment.scheduler;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -7,9 +7,14 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.time.Instant;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.tcs.assignment.payment.model.Transaction;
+import com.tcs.assignment.payment.processor.ManageAccountTransaction;
+import com.tcs.assignment.payment.util.AppConstants;
 
 /**
  *
@@ -20,6 +25,8 @@ import org.junit.jupiter.api.Test;
  */
 public class ScheduleTransactionFetchTest {
 	
+	static Logger logger = Logger.getLogger(ScheduleTransactionFetchTest.class);
+	
 	@Test
     public void testScheduler() {
 		try {
@@ -29,18 +36,20 @@ public class ScheduleTransactionFetchTest {
 			for(int i=10; i<14; i++) {
 				try {
 					Thread.sleep(1000L);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				} catch (InterruptedException ex) {
+					logger.error(ex);
+					assertTrue(false, "No exceptions expected while running scheduler");
 				}
 				Transaction newTrans = new Transaction(Instant.now(), i*1000.0, 0.0);
 				ManageAccountTransaction.getInstance().createTransaction(newTrans);
 			}
 			
 		} catch (Exception ex) {
-			ex.printStackTrace();
-			assertTrue(false);
+			logger.error(ex);
+			assertTrue(false, "No exceptions expected while running scheduler");
 		}
-		assertTrue(true);//No exception thrown
+		//Test case passes when no exceptions occurred
+		assertTrue(true, "No exceptions expected while running scheduler");
 		
 	}
 
@@ -55,8 +64,9 @@ public class ScheduleTransactionFetchTest {
 		try(PrintWriter writer = new PrintWriter(new File(AppConstants.FILE_PATH))) {
 			writer.print("");
 			writer.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+		} catch (FileNotFoundException ex) {
+			logger.error(ex);
+			assertTrue(false, "No exceptions expected while tear down");
 		}
 	}
 	

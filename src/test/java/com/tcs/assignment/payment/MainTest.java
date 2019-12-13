@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import com.tcs.assignment.payment.util.AppConstants;
+
 /**
  * Test class to test Main
  *
@@ -25,9 +27,9 @@ public class MainTest {
 			Main.main(args);
 		}catch(Exception ex) {
 			ex.printStackTrace();
-			assertTrue(false);
+			assertTrue(false, "No exceptions expected while running Main");
 		}
-		assertTrue(true);		
+		assertTrue(true, "No exceptions expected while running Main");		
 	}
 
 	@AfterEach

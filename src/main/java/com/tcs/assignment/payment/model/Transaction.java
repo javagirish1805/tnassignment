@@ -1,7 +1,9 @@
-package com.tcs.assignment.payment;
+package com.tcs.assignment.payment.model;
 
 import java.time.Instant;
 import java.util.Objects;
+
+import com.tcs.assignment.payment.util.AppConstants;
 
 /**
  *

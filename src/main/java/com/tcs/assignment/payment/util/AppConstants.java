@@ -1,4 +1,4 @@
-package com.tcs.assignment.payment;
+package com.tcs.assignment.payment.util;
 
 /**
  *
